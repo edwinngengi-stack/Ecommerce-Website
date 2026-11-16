@@ -7,7 +7,20 @@ import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or os.urandom(32)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///' + os.path.join(app.instance_path, 'shop.db')
+
+
+def get_database_url():
+    database_url = os.environ.get('DATABASE_URL')
+    if not database_url:
+        return 'sqlite:///' + os.path.join(app.instance_path, 'shop.db')
+    if database_url.startswith('postgres://'):
+        return database_url.replace('postgres://', 'postgresql+psycopg://', 1)
+    if database_url.startswith('postgresql://'):
+        return database_url.replace('postgresql://', 'postgresql+psycopg://', 1)
+    return database_url
+
+
+app.config['SQLALCHEMY_DATABASE_URI'] = get_database_url()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['DEBUG'] = os.environ.get('FLASK_DEBUG', '').lower() == 'true'
 
@@ -104,6 +117,16 @@ def inject_globals():
 
 
 def seed_db():
+    admin_username = os.environ.get('ADMIN_USERNAME', '').strip()
+    admin_email = os.environ.get('ADMIN_EMAIL', '').strip().lower()
+    admin_password = os.environ.get('ADMIN_PASSWORD', '')
+    admin_settings = (admin_username, admin_email, admin_password)
+    if any(admin_settings) and not all(admin_settings):
+        raise RuntimeError('Set ADMIN_USERNAME, ADMIN_EMAIL, and ADMIN_PASSWORD together.')
+    if admin_password and len(admin_password) < 12:
+        raise RuntimeError('ADMIN_PASSWORD must be at least 12 characters.')
+
+    changed = False
     if Product.query.count() == 0:
         products = [
             Product(name='Handwoven Linen Throw', description='Soft, breathable linen throw in warm sand tones. Perfect for cool evenings. Ethically made.', price=68.00, category='Home', image_url='https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=400&h=400&fit=crop', stock=15, featured=True),
@@ -121,17 +144,30 @@ def seed_db():
         ]
         for p in products:
             db.session.add(p)
+        changed = True
 
-        admin = User(username='admin', email='admin@shop.local', is_admin=True)
-        admin.set_password('admin123')
-        db.session.add(admin)
+    if admin_username:
+        matching_users = User.query.filter(
+            (User.username == admin_username) | (User.email == admin_email)
+        ).all()
+        if matching_users:
+            existing_admin = matching_users[0]
+            if (
+                len(matching_users) != 1
+                or not existing_admin.is_admin
+                or existing_admin.username != admin_username
+                or existing_admin.email != admin_email
+            ):
+                raise RuntimeError('Configured admin username or email is already in use.')
+        else:
+            admin = User(username=admin_username, email=admin_email, is_admin=True)
+            admin.set_password(admin_password)
+            db.session.add(admin)
+            changed = True
 
-        demo = User(username='demo', email='demo@shop.local')
-        demo.set_password('demo123')
-        db.session.add(demo)
-
+    if changed:
         db.session.commit()
-        print('Database seeded.')
+        print('Database initialized.')
 
 
 @app.route('/')

@@ -1,9 +1,10 @@
 import os
 import unittest
+from unittest.mock import patch
 
 os.environ['DATABASE_URL'] = 'sqlite://'
 
-from app import CartItem, Order, OrderItem, Product, User, app, db
+from app import CartItem, Order, OrderItem, Product, User, app, db, get_database_url, seed_db
 
 
 class ShopWorkflowTests(unittest.TestCase):
@@ -135,6 +136,34 @@ class ShopWorkflowTests(unittest.TestCase):
         response = self.client.get('/admin/orders')
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.location, '/')
+
+    def test_database_url_supports_render_postgres_urls(self):
+        with patch.dict(os.environ, {'DATABASE_URL': 'postgres://user:pass@host/db'}):
+            self.assertEqual(
+                get_database_url(),
+                'postgresql+psycopg://user:pass@host/db',
+            )
+        with patch.dict(os.environ, {'DATABASE_URL': 'postgresql://user:pass@host/db'}):
+            self.assertEqual(
+                get_database_url(),
+                'postgresql+psycopg://user:pass@host/db',
+            )
+
+    def test_configured_admin_is_created_without_default_demo_accounts(self):
+        with patch.dict(os.environ, {
+            'ADMIN_USERNAME': 'first-admin',
+            'ADMIN_EMAIL': 'first-admin@example.com',
+            'ADMIN_PASSWORD': 'a-private-password',
+        }):
+            with app.app_context():
+                seed_db()
+
+        with app.app_context():
+            admin = User.query.filter_by(username='first-admin').one()
+            self.assertTrue(admin.is_admin)
+            self.assertTrue(admin.check_password('a-private-password'))
+            self.assertIsNone(User.query.filter_by(username='admin').first())
+            self.assertIsNone(User.query.filter_by(username='demo').first())
 
 
 if __name__ == '__main__':

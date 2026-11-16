@@ -18,7 +18,8 @@ Full-stack e-commerce platform for product browsing and management.
 
 - Backend: Python, Flask, SQLAlchemy, Flask-Login
 - Frontend: HTML, Tailwind CSS, JavaScript
-- Database: SQLite
+- Database: SQLite for local development; PostgreSQL for deployment
+- Production server: Gunicorn
 
 ## Setup
 
@@ -29,18 +30,39 @@ python app.py
 
 Open http://127.0.0.1:5000
 
-For local development, set `FLASK_DEBUG=true` to enable Flask debug mode. Set
-`SECRET_KEY` and `DATABASE_URL` in the environment when deploying or using a
-non-default database.
+For local development, set `FLASK_DEBUG=true` to enable Flask debug mode.
+Without `DATABASE_URL`, the app uses a local SQLite database.
 
-## Demo Accounts (local development only)
+## Deploy to Render
 
-| Role  | Username | Password  |
-|-------|----------|-----------|
-| User  | demo     | demo123   |
-| Admin | admin    | admin123  |
+1. Create a PostgreSQL database in the Render dashboard.
+2. Create a **Web Service** for this GitHub repository and select the `main`
+   branch. Leave the root directory blank.
+3. Use these commands:
 
-Admin panels: `/admin/products` and `/admin/orders`
+   - Build: `pip install -r requirements.txt`
+   - Start: `gunicorn --workers 1 --bind 0.0.0.0:$PORT app:app`
+
+   The included `Procfile` provides the same start command.
+4. In the web service's environment settings, add:
+
+   - `DATABASE_URL`: the PostgreSQL database's **Internal Database URL**
+   - `SECRET_KEY`: a newly generated, private random value
+   - `ADMIN_USERNAME`: the username for the first administrator
+   - `ADMIN_EMAIL`: the administrator's email address
+   - `ADMIN_PASSWORD`: a private password of at least 12 characters
+
+   Set all three `ADMIN_...` variables together. The app creates this
+   administrator when it first initializes the database; it does not reset
+   that account's password on later restarts. Keep these values private and
+   never commit them to the repository.
+5. Deploy the service. Render will provide its public URL and can deploy future
+   pushes to `main` automatically.
+
+The app seeds sample products in an empty database. It no longer creates public
+demo or default administrator accounts. If you reuse an older local database,
+the users already in that database remain; change or remove any old demo
+credentials before exposing that database publicly.
 
 Checkout is in demo mode and does not process payments.
 
