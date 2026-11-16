@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+    <nav class="text-sm text-ink-700/60 mb-6">
+        <a href="{{ url_for('products') }}" class="hover:text-sage-600">Shop</a>
+        <span class="mx-1.5">/</span>
+        <a href="{{ url_for('products', category=product.category) }}" class="hover:text-sage-600">{{ product.category }}</a>
+        <span class="mx-1.5">/</span>
+        <span class="text-ink-800">{{ product.name }}</span>
+    </nav>
+
+    <div class="grid md:grid-cols-2 gap-10 lg:gap-16">
+        <div class="aspect-square rounded-2xl overflow-hidden bg-cream-200 border border-cream-200">
+            <img src="{{ product.image_url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+        </div>
+        <div class="flex flex-col">
+            <p class="text-xs uppercase tracking-wider text-sage-600 mb-2">{{ product.category }}</p>
+            <h1 class="font-display text-3xl text-ink-900 mb-3">{{ product.name }}</h1>
+            <p class="text-2xl text-ink-800 mb-6">${{ '%.2f'|format(product.price) }}</p>
+            <p class="text-ink-700/85 leading-relaxed mb-8">{{ product.description }}</p>
+
+            <div class="flex items-center gap-3 mb-6">
+                {% if product.stock > 0 %}
+                <span class="inline-flex items-center gap-1.5 text-sm text-sage-600">
+                    <span class="w-2 h-2 rounded-full bg-sage-500"></span>
+                    In stock ({{ product.stock }})
+                </span>
+                {% else %}
+                <span class="inline-flex items-center gap-1.5 text-sm text-red-600">
+                    <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                    Out of stock
+                </span>
+                {% endif %}
+            </div>
+
+            {% if product.stock > 0 %}
+            <form action="{{ url_for('add_to_cart', product_id=product.id) }}" method="post" class="flex flex-wrap items-center gap-3">
+                <div class="flex items-center border border-cream-300 rounded-full overflow-hidden">
+                    <button type="button" onclick="this.nextElementSibling.stepDown()" class="px-3 py-2 text-ink-700 hover:bg-cream-100">−</button>
+                    <input type="number" name="quantity" value="1" min="1" max="{{ product.stock }}" 
+                           class="w-12 text-center border-0 bg-transparent text-sm focus:outline-none py-2">
+                    <button type="button" onclick="this.previousElementSibling.stepUp()" class="px-3 py-2 text-ink-700 hover:bg-cream-100">+</button>
+                </div>
+                {% if current_user.is_authenticated %}
+                <button type="submit" class="btn-primary text-cream-50 px-7 py-2.5 rounded-full text-sm font-medium shadow-sm hover:shadow transition">
+                    Add to cart
+                </button>
+                {% else %}
+                <a href="{{ url_for('login', next=url_for('product_detail', product_id=product.id)) }}" 
+                   class="btn-primary text-cream-50 px-7 py-2.5 rounded-full text-sm font-medium shadow-sm">
+                    Sign in to purchase
+                </a>
+                {% endif %}
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if related %}
+    <section class="mt-20">
+        <h2 class="font-display text-xl text-ink-900 mb-6">You might also like</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-5">
+            {% for p in related %}
+            <a href="{{ url_for('product_detail', product_id=p.id) }}" class="product-card group block bg-cream-50 rounded-xl overflow-hidden border border-cream-200">
+                <div class="aspect-square overflow-hidden bg-cream-200">
+                    <img src="{{ p.image_url }}" alt="{{ p.name }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                </div>
+                <div class="p-3">
+                    <h3 class="text-sm font-medium text-ink-900">{{ p.name }}</h3>
+                    <p class="text-sm text-ink-700 mt-1">${{ '%.2f'|format(p.price) }}</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

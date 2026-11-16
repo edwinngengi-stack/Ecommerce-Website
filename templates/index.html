@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<section class="relative overflow-hidden">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+                <p class="text-sage-600 text-sm font-medium tracking-wide uppercase mb-3">Everyday essentials</p>
+                <h1 class="font-display text-4xl sm:text-5xl text-ink-900 leading-tight mb-5">
+                    Goods that feel<br>right at home
+                </h1>
+                <p class="text-ink-700/80 text-lg leading-relaxed mb-8 max-w-md">
+                    Soft materials, honest construction, and designs that age well. Browse the collection.
+                </p>
+                <div class="flex flex-wrap gap-3">
+                    <a href="{{ url_for('products') }}" class="btn-primary text-cream-50 px-6 py-3 rounded-full text-sm font-medium shadow-sm hover:shadow transition">
+                        Browse products
+                    </a>
+                    <a href="{{ url_for('products', category='Home') }}" class="px-6 py-3 rounded-full text-sm font-medium border border-cream-300 text-ink-700 hover:bg-cream-100 transition">
+                        Home essentials
+                    </a>
+                </div>
+            </div>
+            <div class="relative">
+                <div class="aspect-[4/5] rounded-2xl overflow-hidden bg-cream-200 shadow-xl shadow-clay-400/10">
+                    <img src="https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=700&h=875&fit=crop" 
+                         alt="Interior with soft textiles" 
+                         class="w-full h-full object-cover">
+                </div>
+                <div class="absolute -bottom-4 -left-4 bg-cream-50 border border-cream-200 rounded-xl px-4 py-3 shadow-md max-w-[180px]">
+                    <p class="text-xs text-ink-700/70">New arrivals</p>
+                    <p class="font-display text-ink-900 text-sm">Handwoven & ceramic pieces</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+    <div class="flex items-end justify-between mb-8">
+        <div>
+            <h2 class="font-display text-2xl text-ink-900">Featured</h2>
+            <p class="text-sm text-ink-700/70 mt-1">Selected for quality and design</p>
+        </div>
+        <a href="{{ url_for('products') }}" class="text-sm text-sage-600 hover:text-sage-700 hidden sm:inline">View all →</a>
+    </div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-5">
+        {% for product in featured %}
+        <a href="{{ url_for('product_detail', product_id=product.id) }}" class="product-card group block bg-cream-50 rounded-xl overflow-hidden border border-cream-200">
+            <div class="aspect-square overflow-hidden bg-cream-200">
+                <img src="{{ product.image_url }}" alt="{{ product.name }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+            </div>
+            <div class="p-3.5">
+                <p class="text-xs text-sage-600 mb-0.5">{{ product.category }}</p>
+                <h3 class="text-sm font-medium text-ink-900 leading-snug group-hover:text-sage-700 transition">{{ product.name }}</h3>
+                <p class="text-sm text-ink-700 mt-1.5">${{ '%.2f'|format(product.price) }}</p>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+    <h2 class="font-display text-2xl text-ink-900 mb-6">Shop by category</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {% set cats = [
+            ('Home', 'Spaces that breathe', 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=400&h=300&fit=crop'),
+            ('Apparel', 'Soft layers', 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=400&h=300&fit=crop'),
+            ('Wellness', 'Quiet rituals', 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=300&fit=crop'),
+            ('Art', 'Walls with soul', 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=400&h=300&fit=crop')
+        ] %}
+        {% for name, tagline, img in cats %}
+        <a href="{{ url_for('products', category=name) }}" class="relative group rounded-xl overflow-hidden aspect-[4/3]">
+            <img src="{{ img }}" alt="{{ name }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+            <div class="absolute inset-0 bg-gradient-to-t from-ink-900/70 via-ink-900/20 to-transparent"></div>
+            <div class="absolute bottom-0 left-0 p-4">
+                <p class="text-cream-50 font-display text-lg">{{ name }}</p>
+                <p class="text-cream-200 text-xs">{{ tagline }}</p>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="max-w-6xl mx-auto px-4 sm:px-6 py-12 pb-20">
+    <div class="flex items-end justify-between mb-8">
+        <h2 class="font-display text-2xl text-ink-900">Recently added</h2>
+        <a href="{{ url_for('products') }}" class="text-sm text-sage-600 hover:text-sage-700">See everything →</a>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+        {% for product in products %}
+        <a href="{{ url_for('product_detail', product_id=product.id) }}" class="product-card group block bg-cream-50 rounded-xl overflow-hidden border border-cream-200">
+            <div class="aspect-square overflow-hidden bg-cream-200">
+                <img src="{{ product.image_url }}" alt="{{ product.name }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+            </div>
+            <div class="p-3.5">
+                <p class="text-xs text-sage-600 mb-0.5">{{ product.category }}</p>
+                <h3 class="text-sm font-medium text-ink-900 leading-snug">{{ product.name }}</h3>
+                <p class="text-sm text-ink-700 mt-1.5">${{ '%.2f'|format(product.price) }}</p>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

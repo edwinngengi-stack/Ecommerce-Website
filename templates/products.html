@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{% if current_category %}{{ current_category }}{% else %}All Products{% endif %}{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
+        <div>
+            <h1 class="font-display text-3xl text-ink-900">
+                {% if current_category %}{{ current_category }}{% else %}All products{% endif %}
+            </h1>
+            <p class="text-sm text-ink-700/70 mt-1">{{ products|length }} item{% if products|length != 1 %}s{% endif %}</p>
+        </div>
+        <form method="get" action="{{ url_for('products') }}" class="flex gap-2">
+            {% if current_category %}
+            <input type="hidden" name="category" value="{{ current_category }}">
+            {% endif %}
+            <input type="search" name="q" value="{{ search or '' }}" placeholder="Search products..."
+                   class="px-4 py-2 rounded-full border border-cream-300 bg-cream-50 text-sm focus:outline-none focus:ring-2 focus:ring-sage-400/40 w-48 sm:w-56">
+            <button type="submit" class="px-4 py-2 rounded-full bg-sage-500 text-cream-50 text-sm hover:bg-sage-600 transition">Search</button>
+        </form>
+    </div>
+
+    <!-- Category filters -->
+    <div class="flex flex-wrap gap-2 mb-8">
+        <a href="{{ url_for('products') }}" 
+           class="px-3.5 py-1.5 rounded-full text-sm border transition
+           {% if not current_category %}bg-sage-500 text-cream-50 border-sage-500{% else %}border-cream-300 text-ink-700 hover:border-sage-400{% endif %}">
+            All
+        </a>
+        {% for cat in categories %}
+        <a href="{{ url_for('products', category=cat) }}" 
+           class="px-3.5 py-1.5 rounded-full text-sm border transition
+           {% if current_category == cat %}bg-sage-500 text-cream-50 border-sage-500{% else %}border-cream-300 text-ink-700 hover:border-sage-400{% endif %}">
+            {{ cat }}
+        </a>
+        {% endfor %}
+    </div>
+
+    {% if products %}
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+        {% for product in products %}
+        <a href="{{ url_for('product_detail', product_id=product.id) }}" class="product-card group block bg-cream-50 rounded-xl overflow-hidden border border-cream-200">
+            <div class="aspect-square overflow-hidden bg-cream-200 relative">
+                <img src="{{ product.image_url }}" alt="{{ product.name }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                {% if product.stock < 5 and product.stock > 0 %}
+                <span class="absolute top-2 left-2 text-[10px] bg-clay-500 text-white px-2 py-0.5 rounded-full">Low stock</span>
+                {% elif product.stock == 0 %}
+                <span class="absolute top-2 left-2 text-[10px] bg-ink-800 text-white px-2 py-0.5 rounded-full">Sold out</span>
+                {% endif %}
+            </div>
+            <div class="p-3.5">
+                <p class="text-xs text-sage-600 mb-0.5">{{ product.category }}</p>
+                <h3 class="text-sm font-medium text-ink-900 leading-snug">{{ product.name }}</h3>
+                <p class="text-sm text-ink-700 mt-1.5">${{ '%.2f'|format(product.price) }}</p>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-20">
+        <p class="text-ink-700/70 mb-4">No products found.</p>
+        <a href="{{ url_for('products') }}" class="text-sage-600 hover:text-sage-700 text-sm">Clear filters</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
