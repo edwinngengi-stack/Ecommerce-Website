@@ -2,6 +2,8 @@
 
 Full-stack e-commerce platform for product browsing and management.
 
+Live demo: https://auspify-market.onrender.com
+
 ## Features
 
 - Product catalog with search and category filters
